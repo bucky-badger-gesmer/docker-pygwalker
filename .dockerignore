@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Data files (we mount these as volumes)
+data/*
+!data/sample_data.csv
+
+# Docker
+docker-compose.yml
+.dockerignore
+
+# Testing
+tests/
+*.pytest_cache
+
+# Misc
+*.log
+.env
+.env.local
