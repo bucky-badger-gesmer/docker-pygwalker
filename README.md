@@ -2,23 +2,27 @@
 
 A Dockerized PyGWalker application that provides an interactive web interface for data visualization and exploration. Load your CSV, Excel, or Parquet files and explore them with an intuitive drag-and-drop interface.
 
+This application uses Flask with PyGWalker's native rendering capabilities for a lightweight, production-ready deployment.
+
 ## Features
 
 - 🐳 Fully containerized with Docker
 - 📊 Supports multiple data formats (CSV, Excel, Parquet, JSON)
 - 🎨 Interactive web-based visualization interface powered by PyGWalker
+- 🎯 **Interactive file selection** - Choose from available data files at startup
 - 🔒 File validation and error handling
-- 📦 Easy deployment with Docker Compose
+- 📦 Easy deployment with Docker
 - 🗂️ Volume mounting for local data access
+- 🚀 Lightweight Flask-based server (no Streamlit dependency)
+- 📝 Comprehensive logging for debugging
+- 💉 Health check endpoints for monitoring
+- 🌈 Colored terminal output for better user experience
 
 ## Prerequisites
 
 - Docker (version 20.10 or higher)
-- Docker Compose (version 2.0 or higher)
 
 ## Quick Start
-
-### Option 1: Using Docker Compose (Recommended)
 
 1. **Clone or download this repository**
 
@@ -29,29 +33,12 @@ A Dockerized PyGWalker application that provides an interactive web interface fo
    cp /path/to/your/data.csv ./data/
    ```
 
-3. **Build and run the container**
-   ```bash
-   docker-compose up --build
-   ```
-
-4. **Access the application**
-   - The container will start and automatically load the data file
-   - Open your browser and navigate to: `http://localhost:8888`
-
-5. **Stop the container**
-   ```bash
-   # Press Ctrl+C in the terminal, or in another terminal:
-   docker-compose down
-   ```
-
-### Option 2: Using Docker Commands
-
-1. **Build the Docker image**
+3. **Build the Docker image**
    ```bash
    docker build -t pygwalker-app .
    ```
 
-2. **Run the container**
+4. **Run the container with interactive file selection**
    ```bash
    docker run -it --rm \
      -p 8888:8888 \
@@ -59,7 +46,30 @@ A Dockerized PyGWalker application that provides an interactive web interface fo
      pygwalker-app
    ```
 
-3. **Or pass the file path directly**
+   This will present you with an interactive menu to choose from available data files:
+   ```
+   ============================================================
+   PyGWalker Data Explorer - File Selection
+   ============================================================
+
+   Available data files:
+
+     1. sample_data.csv (1.2 MB) [CSV] [DEFAULT]
+     2. sales_data.xlsx (3.4 MB) [XLSX]
+     3. customer_data.parquet (890 KB) [PARQUET]
+
+   Enter file number (1-3) or press Enter for default [sample_data.csv]:
+   ```
+
+5. **Access the application**
+   - Open your browser and navigate to: `http://localhost:8888`
+
+6. **Stop the container**
+   - Press Ctrl+C in the terminal
+
+### Skip File Selection
+
+To skip interactive selection, pass the file path directly:
    ```bash
    docker run -it --rm \
      -p 8888:8888 \
@@ -68,52 +78,39 @@ A Dockerized PyGWalker application that provides an interactive web interface fo
      pygwalker-app
    ```
 
-   Or as a command-line argument:
-   ```bash
-   docker run -it --rm \
-     -p 8888:8888 \
-     -v "$(pwd)/data:/data:ro" \
-     pygwalker-app /data/sample_data.csv
-   ```
-
 ## Usage Examples
 
-### Example 1: Using Sample Data
+### Example 1: Interactive File Selection (New!)
 
-Try the included sample dataset:
+Place multiple data files in the `data` directory and let the application prompt you to choose:
 
 ```bash
-docker-compose up
-# Open browser to http://localhost:8888
+# Add multiple files to the data directory
+cp ~/Downloads/sales_data.xlsx ./data/
+cp ~/Downloads/customer_data.parquet ./data/
+
+# Run with interactive mode
+docker run -it --rm \
+  -p 8888:8888 \
+  -v "$(pwd)/data:/data:ro" \
+  pygwalker-app
 ```
 
-### Example 2: Using Your Own Data
+You'll be prompted to select which file to load. Press Enter to use the default, or type a number to select a specific file.
 
-1. Copy your data file to the data directory:
-   ```bash
-   cp ~/Downloads/sales_data.xlsx ./data/
-   ```
+### Example 2: Skip Selection with Environment Variable
 
-2. Set the file path in docker-compose.yml or run:
-   ```bash
-   DATA_FILE_PATH=/data/sales_data.xlsx docker-compose up
-   ```
+Set the file path directly to skip the interactive selection:
 
-### Example 3: Using Environment Variables
-
-Edit `docker-compose.yml` to set the file path:
-
-```yaml
-environment:
-  - DATA_FILE_PATH=/data/my_data.csv
-```
-
-Then run:
 ```bash
-docker-compose up
+docker run -it --rm \
+  -p 8888:8888 \
+  -v "$(pwd)/data:/data:ro" \
+  -e DATA_FILE_PATH=/data/sales_data.xlsx \
+  pygwalker-app
 ```
 
-### Example 4: Mount Different Data Directory
+### Example 3: Mount Different Data Directory
 
 If your data is in a different location:
 
@@ -121,7 +118,7 @@ If your data is in a different location:
 docker run -it --rm \
   -p 8888:8888 \
   -v "/path/to/your/data:/data:ro" \
-  pygwalker-app /data/your-file.csv
+  pygwalker-app
 ```
 
 ## Supported File Formats
@@ -130,6 +127,51 @@ docker run -it --rm \
 - **Excel** (`.xlsx`, `.xls`) - Microsoft Excel files
 - **Parquet** (`.parquet`) - Apache Parquet format
 - **JSON** (`.json`) - JSON files
+
+## Interactive File Selection
+
+When you run the application without setting the `DATA_FILE_PATH` environment variable, it will automatically scan the `/data` directory for supported files and present an interactive menu:
+
+### Features:
+- Lists all available data files with sizes and formats
+- Shows which file is the default (if `sample_data.csv` exists)
+- Allows selection by number or pressing Enter for default
+- Displays file sizes in human-readable format (KB, MB, GB)
+- Handles invalid input gracefully
+- Supports Ctrl+C to cancel and use default
+
+### Example Flow:
+```
+============================================================
+PyGWalker Data Explorer - File Selection
+============================================================
+
+Available data files:
+
+  1. sample_data.csv (1.2 MB) [CSV] [DEFAULT]
+  2. sales_data.xlsx (3.4 MB) [XLSX]
+  3. customer_data.parquet (890.5 KB) [PARQUET]
+  4. users.json (245.8 KB) [JSON]
+
+Enter file number (1-4) or press Enter for default [sample_data.csv]: 2
+
+Selected file: sales_data.xlsx
+
+Loading data file: sales_data.xlsx
+Full path: /data/sales_data.xlsx
+
+============================================================
+Application Ready
+============================================================
+...
+```
+
+### Edge Cases Handled:
+- **Empty directory**: Falls back to default file path
+- **Invalid selection**: Uses default file
+- **Ctrl+C during selection**: Gracefully exits or uses default
+- **Directory doesn't exist**: Falls back to default
+- **No default file exists**: Uses first available file
 
 ## Configuration
 
@@ -141,22 +183,14 @@ You can customize the application using these environment variables:
 |----------|---------|-------------|
 | `PYGWALKER_HOST` | `0.0.0.0` | Host address for the web server |
 | `PYGWALKER_PORT` | `8888` | Port for the web interface |
-| `DATA_FILE_PATH` | `/data/sample_data.csv` | Path to the data file |
+| `DATA_FILE_PATH` | *Interactive selection* | Path to the data file (if not set, prompts for selection) |
+
+**Note:** If `DATA_FILE_PATH` is not set, the application will scan the `/data` directory and present an interactive menu to choose from available files.
 
 ### Changing the Port
 
 To use a different port (e.g., 8080):
 
-**Docker Compose:**
-Edit `docker-compose.yml`:
-```yaml
-ports:
-  - "8080:8888"
-environment:
-  - PYGWALKER_PORT=8888
-```
-
-**Docker Command:**
 ```bash
 docker run -it --rm \
   -p 8080:8888 \
@@ -173,7 +207,6 @@ Then access at `http://localhost:8080`
 docker-pygwalker/
 ├── app.py                  # Main Python application
 ├── Dockerfile              # Docker image configuration
-├── docker-compose.yml      # Docker Compose configuration
 ├── requirements.txt        # Python dependencies
 ├── README.md              # This file
 └── data/                  # Directory for data files
@@ -220,14 +253,12 @@ chmod 644 data/your-file.csv
 
 ### Container Exits Immediately
 
-This usually means there was an error. Check logs:
+This usually means there was an error. Run with interactive mode to see errors:
 ```bash
-docker-compose logs
-```
-
-Or run with interactive mode to see errors:
-```bash
-docker-compose run --rm pygwalker
+docker run -it --rm \
+  -p 8888:8888 \
+  -v "$(pwd)/data:/data:ro" \
+  pygwalker-app
 ```
 
 ## Development
@@ -238,17 +269,18 @@ docker-compose run --rm pygwalker
 2. Edit `requirements.txt` to add/remove dependencies
 3. Rebuild the image:
    ```bash
-   docker-compose build
+   docker build -t pygwalker-app .
    ```
 
 ### Testing Changes
 
 ```bash
 # Rebuild and run
-docker-compose up --build
-
-# Or run tests (if you add them)
-docker-compose run --rm pygwalker python -m pytest
+docker build -t pygwalker-app . && \
+docker run -it --rm \
+  -p 8888:8888 \
+  -v "$(pwd)/data:/data:ro" \
+  pygwalker-app
 ```
 
 ## Security Considerations
@@ -286,11 +318,67 @@ This project is open source and available under the MIT License.
 
 If you encounter issues:
 1. Check the troubleshooting section above
-2. Review Docker logs: `docker-compose logs`
+2. Run in interactive mode to see detailed logs
 3. Ensure your data file is in a supported format
-4. Verify Docker and Docker Compose are properly installed
+4. Verify Docker is properly installed
+
+## API Endpoints
+
+The application exposes the following endpoints:
+
+- `GET /` - Main PyGWalker visualization interface
+- `GET /health` - Health check endpoint returning application status
+- `GET /info` - Detailed data information (rows, columns, dtypes)
+
+Example health check:
+```bash
+curl http://localhost:8888/health
+```
+
+Response:
+```json
+{
+  "status": "healthy",
+  "file": "sample_data.csv",
+  "rows": 1000,
+  "columns": 5
+}
+```
+
+## Architecture
+
+The application is built with:
+- **Flask**: Lightweight web framework serving the PyGWalker interface
+- **PyGWalker**: Interactive data visualization library
+- **Pandas**: Data manipulation and loading
+- **Python 3.11**: Modern Python runtime
+
+Key benefits over Streamlit-based approach:
+- Smaller container size (no Streamlit/Jupyter dependencies)
+- Faster startup time
+- Lower memory footprint
+- Production-ready Flask server
+- RESTful API endpoints for monitoring
+- Better control over routing and middleware
 
 ## Version History
+
+- **v2.1.0** - Interactive file selection
+  - Added interactive file selection functionality
+  - Automatic scanning of `/data` directory for supported files
+  - User-friendly file selection prompt with file sizes and formats
+  - Enhanced error handling for Ctrl+C and invalid selections
+  - Colored terminal output for better UX
+  - Smart fallback to default file when needed
+  - Improved startup messages and logging
+
+- **v2.0.0** - Flask refactor
+  - Replaced Streamlit with Flask for lightweight deployment
+  - Added health check and info API endpoints
+  - Comprehensive structured logging
+  - Improved error handling and user feedback
+  - Type hints throughout codebase
+  - Modern Python best practices
 
 - **v1.0.0** - Initial release
   - Docker support with Python 3.11
@@ -301,4 +389,4 @@ If you encounter issues:
 
 ---
 
-Made with ❤️ using PyGWalker and Docker
+Made with using PyGWalker, Flask, and Docker

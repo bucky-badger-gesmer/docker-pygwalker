@@ -3,14 +3,14 @@ pygwalker>=0.4.9
 pandas>=2.0.0
 numpy>=1.24.0
 
-# File format support
-openpyxl>=3.1.0  # Excel support
-pyarrow>=14.0.0  # Parquet support
-fastparquet>=2023.10.0  # Alternative Parquet engine
+# Web framework
+flask>=3.0.0
+werkzeug>=3.0.0
 
-# Web interface
-streamlit>=1.31.0
-jupyter>=1.0.0
+# File format support
+openpyxl>=3.1.0      # Excel support
+pyarrow>=14.0.0      # Parquet support
+fastparquet>=2023.10.0  # Alternative Parquet engine
 
 # Additional utilities
 python-dotenv>=1.0.0

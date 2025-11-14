@@ -29,9 +29,6 @@ Thumbs.db
 *.md
 !README.md
 
-# Data files (we mount these as volumes)
-data/*
-!data/sample_data.csv
 
 # Docker
 docker-compose.yml
