@@ -38,7 +38,7 @@ const FileSelector: React.FC<FileSelectorProps> = ({ onFileSelected, isLoading }
         onClick={handleButtonClick}
         disabled={isLoading}
       >
-        {isLoading ? 'Loading...' : 'Select Data File'}
+        {isLoading ? 'Loading...' : 'Upload File'}
       </button>
       <span className="file-selector-hint">
         Supported formats: CSV, JSON, Excel (.xlsx, .xls)

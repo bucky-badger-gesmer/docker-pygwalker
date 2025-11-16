@@ -556,6 +556,11 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
             .file-input {
                 display: none;
             }
+            .file-upload-hint {
+                font-size: 12px;
+                opacity: 0.8;
+                font-style: italic;
+            }
             .info-panel {
                 display: flex;
                 gap: 30px;
@@ -656,6 +661,7 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
                 <div class="info-item">
                     <button id="uploadFileButton" class="upload-file-button">Upload File</button>
                     <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls,.json,.parquet">
+                    <span class="file-upload-hint">Supported formats: CSV, JSON, Excel (.xlsx, .xls)</span>
                 </div>
             </div>
         </div>
