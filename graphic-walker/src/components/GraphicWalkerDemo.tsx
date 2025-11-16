@@ -91,11 +91,6 @@ const GraphicWalkerDemo: React.FC = () => {
     }
   };
 
-  // Calculate data statistics
-  const rowCount = data.length;
-  const columnCount = fields.length;
-  const columnNames = fields.map(f => f.name).join(', ');
-
   return (
     <>
       <div className="header">
@@ -104,18 +99,6 @@ const GraphicWalkerDemo: React.FC = () => {
           <div className="info-item">
             <span className="info-label">File:</span>
             <span className="info-value">{fileName}</span>
-          </div>
-          <div className="info-item">
-            <span className="info-label">Rows:</span>
-            <span className="info-value">{rowCount.toLocaleString()}</span>
-          </div>
-          <div className="info-item">
-            <span className="info-label">Columns:</span>
-            <span className="info-value">{columnCount}</span>
-          </div>
-          <div className="columns-info">
-            <span className="info-label">Fields:</span>
-            <span className="columns-list" title={columnNames}>{columnNames}</span>
           </div>
           <FileSelector onFileSelected={handleFileSelected} isLoading={isLoading} />
         </div>
