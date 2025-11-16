@@ -4,15 +4,6 @@ FROM python:3.13-slim
 LABEL maintainer="PyGWalker Docker"
 LABEL description="Dockerized PyGWalker application for interactive data visualization"
 
-# Set environment variables
-# PYTHONUNBUFFERED=1 enables interactive input prompts to work in Docker
-# ENV PYTHONUNBUFFERED=1 \
-#     PYTHONDONTWRITEBYTECODE=1 \
-#     PIP_NO_CACHE_DIR=1 \
-#     PIP_DISABLE_PIP_VERSION_CHECK=1 \
-#     PYGWALKER_HOST=0.0.0.0 \
-#     PYGWALKER_PORT=8888
-
 # Set working directory
 WORKDIR /app
 
@@ -31,11 +22,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application script
 COPY app.py .
 
-# Create data directory for mounting volumes
 RUN mkdir -p /data
 
 # Copy sample data into the container
-COPY data/ /data/
+COPY sample_data.csv .
 
 # Expose the port for PyGWalker web interface
 EXPOSE 8888
