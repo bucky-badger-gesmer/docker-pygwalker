@@ -496,7 +496,7 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
     with app_state['lock']:
         app_state['pyg_html'] = pyg.to_html(dataframe)
 
-    # HTML template with improved styling, file selector, and dynamic loading
+    # HTML template with improved styling and upload functionality
     template = """
     <!DOCTYPE html>
     <html lang="en">
@@ -523,91 +523,37 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
                 padding: 20px 30px;
                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             }
-            .header-top {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-                flex-wrap: wrap;
-                gap: 15px;
-            }
             .header h1 {
                 font-size: 28px;
                 font-weight: 600;
+                margin-bottom: 10px;
             }
-            .file-selector {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                flex-wrap: wrap;
-            }
-            .file-select-dropdown {
+            .upload-file-button {
                 background: rgba(255, 255, 255, 0.3);
                 color: white;
-                border: 2px solid rgba(255, 255, 255, 0.5);
-                padding: 8px 16px;
-                border-radius: 6px;
-                font-size: 14px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                font-family: inherit;
-                min-width: 200px;
-            }
-            .file-select-dropdown:hover:not(:disabled) {
-                background: rgba(255, 255, 255, 0.4);
-                border-color: rgba(255, 255, 255, 0.8);
-            }
-            .file-select-dropdown:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-            }
-            .file-select-dropdown option {
-                background: #764ba2;
-                color: white;
-            }
-            .load-file-button, .upload-file-button {
-                background: rgba(255, 255, 255, 0.3);
-                color: white;
-                border: 2px solid rgba(255, 255, 255, 0.5);
-                padding: 8px 20px;
-                border-radius: 6px;
-                font-size: 14px;
+                border: 2px solid rgba(255, 255, 255, 0.6);
+                padding: 6px 16px;
+                border-radius: 4px;
+                font-size: 13px;
                 font-weight: 600;
                 cursor: pointer;
                 transition: all 0.2s ease;
                 font-family: inherit;
             }
-            .load-file-button:hover:not(:disabled), .upload-file-button:hover:not(:disabled) {
+            .upload-file-button:hover:not(:disabled) {
                 background: rgba(255, 255, 255, 0.4);
                 border-color: rgba(255, 255, 255, 0.8);
                 transform: translateY(-1px);
             }
-            .load-file-button:active:not(:disabled), .upload-file-button:active:not(:disabled) {
+            .upload-file-button:active:not(:disabled) {
                 transform: translateY(0);
             }
-            .load-file-button:disabled, .upload-file-button:disabled {
+            .upload-file-button:disabled {
                 opacity: 0.6;
                 cursor: not-allowed;
             }
-            .upload-file-button {
-                background: rgba(255, 255, 255, 0.4);
-                border-color: rgba(255, 255, 255, 0.7);
-            }
             .file-input {
                 display: none;
-            }
-            .file-selector-hint {
-                font-size: 12px;
-                opacity: 0.8;
-                font-style: italic;
-                width: 100%;
-                margin-top: 5px;
-            }
-            .file-selector-divider {
-                color: rgba(255, 255, 255, 0.6);
-                font-weight: 600;
-                font-size: 14px;
             }
             .info-panel {
                 display: flex;
@@ -688,21 +634,6 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
                 .header h1 {
                     font-size: 22px;
                 }
-                .header-top {
-                    flex-direction: column;
-                    align-items: flex-start;
-                }
-                .file-selector {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
-                    width: 100%;
-                }
-                .file-select-dropdown,
-                .load-file-button {
-                    width: 100%;
-                    font-size: 13px;
-                }
                 .info-panel {
                     gap: 15px;
                 }
@@ -715,25 +646,15 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
     </head>
     <body>
         <div class="header">
-            <div class="header-top">
-                <h1>PyGWalker Data Explorer</h1>
-                <div class="file-selector">
-                    <select id="fileSelector" class="file-select-dropdown">
-                        <option value="">Loading files...</option>
-                    </select>
-                    <button id="loadFileButton" class="load-file-button">Load File</button>
-                    <span class="file-selector-divider">or</span>
-                    <button id="uploadFileButton" class="upload-file-button">Upload File</button>
-                    <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls,.json,.parquet">
-                    <div class="file-selector-hint">
-                        Select from /data directory or upload from your computer (CSV, Excel, JSON, Parquet - Max 100MB)
-                    </div>
-                </div>
-            </div>
+            <h1>PyGWalker Data Explorer</h1>
             <div class="info-panel">
                 <div class="info-item">
                     <span class="info-label">File:</span>
                     <span class="info-value" id="currentFileName">{{ file_name }}</span>
+                </div>
+                <div class="info-item">
+                    <button id="uploadFileButton" class="upload-file-button">Upload File</button>
+                    <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls,.json,.parquet">
                 </div>
             </div>
         </div>
@@ -747,94 +668,7 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
             </div>
         </div>
         <script>
-            let availableFiles = [];
             let isLoading = false;
-
-            // Load available files on page load
-            async function loadAvailableFiles() {
-                try {
-                    const response = await fetch('/api/files');
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch files');
-                    }
-
-                    const data = await response.json();
-                    availableFiles = data.files;
-
-                    const selector = document.getElementById('fileSelector');
-                    selector.innerHTML = '';
-
-                    if (availableFiles.length === 0) {
-                        selector.innerHTML = '<option value="">No files available</option>';
-                        selector.disabled = true;
-                        document.getElementById('loadFileButton').disabled = true;
-                        return;
-                    }
-
-                    // Get current file name
-                    const currentFileName = document.getElementById('currentFileName').textContent;
-
-                    availableFiles.forEach(file => {
-                        const option = document.createElement('option');
-                        option.value = file.path;
-                        option.textContent = `${file.name} (${file.size_formatted})`;
-
-                        // Select current file
-                        if (file.name === currentFileName) {
-                            option.selected = true;
-                        }
-
-                        selector.appendChild(option);
-                    });
-
-                    selector.disabled = false;
-                } catch (error) {
-                    console.error('Error loading files:', error);
-                    showError('Failed to load available files: ' + error.message);
-                }
-            }
-
-            // Load a specific file
-            async function loadFile(filePath) {
-                if (isLoading) return;
-
-                isLoading = true;
-                showLoading(true);
-                hideError();
-
-                try {
-                    const response = await fetch('/api/load-file', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ file_path: filePath })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Failed to load file');
-                    }
-
-                    const data = await response.json();
-
-                    // Update the visualization
-                    document.getElementById('pygwalkerContainer').innerHTML = data.html;
-
-                    // Update file info
-                    document.getElementById('currentFileName').textContent = data.file_info.name;
-                    document.getElementById('currentRows').textContent = data.file_info.rows.toLocaleString();
-                    document.getElementById('currentColumns').textContent = data.file_info.columns;
-
-                    console.log('File loaded successfully:', data.file_info.name);
-                } catch (error) {
-                    console.error('Error loading file:', error);
-                    showError('Failed to load file: ' + error.message);
-                } finally {
-                    isLoading = false;
-                    showLoading(false);
-                }
-            }
 
             // Upload a file
             async function uploadFile(file) {
@@ -883,8 +717,6 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
 
                     // Update file info
                     document.getElementById('currentFileName').textContent = data.file_info.name;
-                    document.getElementById('currentRows').textContent = data.file_info.rows.toLocaleString();
-                    document.getElementById('currentColumns').textContent = data.file_info.columns;
 
                     console.log('File uploaded successfully:', data.file_info.name);
 
@@ -901,23 +733,15 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
 
             function showLoading(show, message = 'Loading...') {
                 const overlay = document.getElementById('loadingOverlay');
-                const loadButton = document.getElementById('loadFileButton');
                 const uploadButton = document.getElementById('uploadFileButton');
-                const selector = document.getElementById('fileSelector');
 
                 if (show) {
                     overlay.classList.add('active');
-                    loadButton.disabled = true;
                     uploadButton.disabled = true;
-                    selector.disabled = true;
-                    loadButton.textContent = message;
                     uploadButton.textContent = message;
                 } else {
                     overlay.classList.remove('active');
-                    loadButton.disabled = false;
                     uploadButton.disabled = false;
-                    selector.disabled = false;
-                    loadButton.textContent = 'Load File';
                     uploadButton.textContent = 'Upload File';
                 }
             }
@@ -946,19 +770,6 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
                 return `${size.toFixed(1)} ${units[unitIndex]}`;
             }
 
-            // Event listeners
-            document.getElementById('loadFileButton').addEventListener('click', () => {
-                const selector = document.getElementById('fileSelector');
-                const selectedPath = selector.value;
-
-                if (!selectedPath) {
-                    showError('Please select a file first');
-                    return;
-                }
-
-                loadFile(selectedPath);
-            });
-
             // Upload file button - triggers file input click
             document.getElementById('uploadFileButton').addEventListener('click', () => {
                 document.getElementById('fileInput').click();
@@ -971,9 +782,6 @@ def create_app(dataframe: pd.DataFrame, file_info: dict) -> Flask:
                     uploadFile(file);
                 }
             });
-
-            // Load files on page load
-            loadAvailableFiles();
         </script>
     </body>
     </html>
