@@ -460,10 +460,11 @@ def get_file_path() -> str:
         logger.info(f"Using file path from DATA_FILE_PATH environment variable: {env_file_path}")
         return env_file_path
 
-    # No environment variable set - default to sample_data.csv
-    data_dir = '/data'
+    # No environment variable set - default to sample_data.csv in project root
+    # Get the directory where app.py is located (project root)
+    project_root = Path(__file__).parent
     default_filename = 'sample_data.csv'
-    default_path = f"{data_dir}/{default_filename}"
+    default_path = str(project_root / default_filename)
 
     logger.info(f"DATA_FILE_PATH not set. Defaulting to: {default_path}")
     return default_path
